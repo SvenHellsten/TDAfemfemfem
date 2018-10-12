@@ -152,16 +152,40 @@ padShapeTo (x,y) s = padShape (x-r,y-t) s
 -- ** A11
 
 -- | Test if two shapes overlap
+-- | Test if two shapes overlap
 overlaps :: Shape -> Shape -> Bool
-s1 `overlaps` s2 = error "A11 overlaps undefined"
+s1 `overlaps` s2 = or [rowsOverlap ((rows s1)!!n) ((rows s2)!!n)
+   | n <- [0..(x-1)]]
+    where x = min (length (rows s1)) (length (rows s2))
+
+rowsOverlap :: Row -> Row -> Bool
+rowsOverlap r1 r2 = or [r1!!n/=Nothing && r2!!n/=Nothing
+  | n <- [0..(x-1)]]
+    where x = min (length r1) (length r2)
 
 -- ** A12
 -- | zipShapeWith, like 'zipWith' for lists
 zipShapeWith :: (Square->Square->Square) -> Shape -> Shape -> Shape
-zipShapeWith = error "A12 zipShapeWith undefined"
+zipShapeWith f (S s1) (S s2) = S (zipShapeWith' f s1 s2)
+zipShapeWith' f _ []  = []
+zipShapeWith' f [] _  = []
+zipShapeWith' f (x:xs) (y:ys) = (zipWith f x y) : (zipShapeWith' f xs ys)
+
 
 -- ** A13
 -- | Combine two shapes. The two shapes should not overlap.
 -- The resulting shape will be big enough to fit both shapes.
 combine :: Shape -> Shape -> Shape
-s1 `combine` s2 = error "A13 zipShapeWith undefined"
+s1 `combine` s2 = combine' shape1 shape2
+  where shape1  = padShapeTo (x,y) s1
+        shape2  = padShapeTo (x,y) s2
+        x       = max (length $ head $ rows $ s1) (length $ head $ rows $ s2)
+        y       = max (length $ rows $ s1) (length $ rows $ s2)
+
+combine' :: Shape -> Shape -> Shape
+combine' s1 s2 = zipShapeWith add s1 s2
+          where add :: Square -> Square -> Square
+                add Nothing Nothing = Nothing
+                add Nothing s       = s
+                add s       Nothing = s
+                add (Just c1) (Just c2) = (Just c1)
